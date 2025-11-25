@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  nutri-ai-backend:
+    build: .
+    container_name: nutri-ai-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=sqlite:///./data/nutri_ai.db
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VERTEX_AI_PROJECT_ID=${VERTEX_AI_PROJECT_ID}
+      - VERTEX_AI_LOCATION=${VERTEX_AI_LOCATION}
+      - VERTEX_AI_API_KEY=${VERTEX_AI_API_KEY}
+      - VERTEX_AI_MODEL=${VERTEX_AI_MODEL}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+      - AI_PROVIDER=${AI_PROVIDER}
+      - DEBUG=true
+      - API_HOST=0.0.0.0
+      - API_PORT=3001
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - nutri-ai-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: nutri-ai-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nutri_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-nutri_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nutri_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432" 
+    restart: unless-stopped
+    networks:
+      - nutri-ai-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nutri-ai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - nutri-ai-network
+    command: redis-server --appendonly yes
+  nginx:
+    image: nginx:alpine
+    container_name: nutri-ai-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./static:/var/www/static:ro
+    depends_on:
+      - nutri-ai-backend
+    restart: unless-stopped
+    networks:
+      - nutri-ai-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  nutri-ai-network:
+    driver: bridge

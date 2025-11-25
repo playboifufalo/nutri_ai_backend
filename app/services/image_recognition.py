@@ -1,0 +1,1 @@
+#TODO: add a scanner scanning both products and barcodes at the same time
