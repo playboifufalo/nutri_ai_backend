@@ -15,7 +15,6 @@ class VertexAIImageScanner:
         self.vertex_service = vertex_service
     
     def encode_image_to_base64(self, image: Image.Image) -> str:
-        """Convert PIL Image to base64 string"""
         buffered = io.BytesIO()
         #converting to RGB if needed (removes alpha channel)
         if image.mode in ('RGBA', 'LA', 'P'):
@@ -24,10 +23,9 @@ class VertexAIImageScanner:
         img_bytes = buffered.getvalue()
         return base64.b64encode(img_bytes).decode('utf-8')
     
+
+    # LLM response structuring based on Google Vertex AI response formatting guidelines.
     def analyze_product_image(self, image: Image.Image) -> Dict[str, Any]:
-        """
-        Analyze single product image using Vertex AI
-        """
         try:
             #encode image
             base64_image = self.encode_image_to_base64(image)

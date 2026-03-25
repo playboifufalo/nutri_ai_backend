@@ -14,10 +14,10 @@ export default function ProfileScreen() {
   }, []);
 
   const loadUserProfile = async () => {
-    // First try cached user
+    //First try cached user
     let currentUser = await AuthService.getUser();
     
-    // If no cached user or missing email, fetch from backend
+    //If no cached user or missing email, fetch from backend
     if (!currentUser || !currentUser.email || currentUser.email === 'email@example.com') {
       try {
         const token = await AuthService.getToken();
@@ -29,7 +29,7 @@ export default function ProfileScreen() {
           });
           if (response.ok) {
             const data = await response.json();
-            // Map backend UserResponse to our AuthUser shape
+            //Map backend UserResponse to our AuthUser shape
             currentUser = {
               id: String(data.id),
               username: data.username,

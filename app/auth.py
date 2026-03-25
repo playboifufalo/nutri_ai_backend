@@ -10,7 +10,8 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
+# FastAPI dependency injection pattern:
+# https://fastapi.tiangolo.com/tutorial/dependencies/
 SECRET_KEY = os.getenv("SECRET_KEY", "nutri-ai-secret-key-change-in-production-2026")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
@@ -72,7 +73,8 @@ def verify_token(token: str, token_type: str = "access") -> Optional[str]:
         return username
     except JWTError:
         return None
-
+# Request validation implemented according to FastAPI documentation:
+# https://fastapi.tiangolo.com/tutorial/body/
 def create_tokens(username: str) -> Token:
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

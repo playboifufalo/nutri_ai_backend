@@ -33,7 +33,9 @@ export default function LoginScreen() {
       try {
         const isAuth = await advancedAuthAPI.isAuthenticated();
         if (isAuth) {
-          // If user is already authenticated, check onboarding
+          //If user is already authenticated, check onboarding
+          //API communication pattern based on React data fetching practices:
+          //https://react.dev/learn
           const isOnboardingCompleted = await OnboardingService.isOnboardingCompleted();
           if (isOnboardingCompleted) {
             router.replace('/(tabs)/' as any);

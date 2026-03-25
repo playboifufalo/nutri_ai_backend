@@ -110,7 +110,7 @@ CRITICAL: You MUST list EVERY visible product, not just one. Scan the entire ima
         )
         
         return self._process_response(response, 'advanced_simple')
-    
+   
     def _analyze_medium_image(self, image: Image.Image) -> Dict[str, Any]:
         logger.info("Using MEDIUM strategy")
         

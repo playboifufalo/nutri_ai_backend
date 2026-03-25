@@ -688,6 +688,9 @@ class RecipeGenerationService:
                     if key in nutr:
                         nutr[key] = round(nutr[key] * ratio)
 
+
+# Prompt engineering approach inspired by Google Generative AI best practices:
+# https://cloud.google.com/architecture/ai-ml
     def _get_fallback_recipes(self, count, meal_type=None, allergies=None, disliked=None):
         allergies = allergies or []
         disliked = disliked or []

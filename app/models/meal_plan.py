@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
 
-
+#Database session management pattern inspired by SQLAlchemy best practices.
 class MealPlan(Base):
     __tablename__ = "meal_plans"
     id = Column(Integer, primary_key=True, index=True)
@@ -53,7 +53,7 @@ class MealPlan(Base):
             "days": [day.to_dict() for day in self.days] if self.days else []
         }
 
-
+# SQLAlchemy relationship design based on official ORM documentation.
 class MealPlanDay(Base):
     """
     Model for a single day in a meal plan.

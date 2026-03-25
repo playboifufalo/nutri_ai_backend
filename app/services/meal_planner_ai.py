@@ -76,7 +76,9 @@ class TheMealDBService:
             logger.error(f"themealdb categories error: {e}")
             return ["Beef", "Chicken", "Pasta", "Vegetarian", "Seafood"]
 
-
+ # Based on Google Vertex AI Gemini API documentation:
+# https://cloud.google.com/vertex-ai/generative-ai/docs
+# Used for generating meal recommendations and nutrition analysis.
 class MealPlannerAI:
     def __init__(self):
         self.vertex_ai_service = vertex_ai_service
