@@ -4,7 +4,7 @@ AI-powered backend for a nutrition assistant mobile app that analyzes food produ
 
 **Author:** Timofe Stukalin, a Computer Sciences' student in UCLan University.
 **Contact:** TStukalin@uclan.ac.uk
-**Repository:** https://github.com/your_username/nutri-ai-backend
+**Repository:** https://github.com/playboifufalo/nutri_ai_backend
 
 ---
 
@@ -116,65 +116,109 @@ The project solves the problem of manual nutrition tracking by providing automat
 
 Make sure you have installed:
 
-```
-python --version
-docker --version
-docker-compose --version
-```
+* **Python 3.11+** — `python --version`
+* **Docker & Docker Compose** — `docker --version` && `docker compose version`
+* **Node.js 18+** and **npm** — `node --version` && `npm --version`
+* **Expo CLI** — installed automatically via npx
+* **Xcode** (for iOS Simulator) — available on macOS via App Store
+* **Google Cloud account** with Vertex AI enabled and a service account key (`vertex-ai-key.json`)
 
-Required:
-
-* Python 3.11+
-* Docker
-* Google Cloud account (Vertex AI)
+> ⚠️ The project was developed and fully tested on **iOS (iPhone Simulator)**. Although Expo supports Android, all functionality has been verified on iOS only.
 
 ---
 
-# Installation
+# Installation & Running
 
-## Using Docker (recommended)
+## Step 1 — Clone the repository
 
-Clone repository:
-
-```
-git clone https://github.com/your_username/nutri-ai-backend.git
-
-cd nutri-ai-backend
+```bash
+git clone https://github.com/playboifufalo/nutri_ai_backend.git
+cd nutri_ai_backend
 ```
 
-Run containers:
+## Step 2 — Install Python dependencies
 
-```
-docker-compose up -d --build
-```
-
-Server will start on:
-
-```
-http://localhost:3001
-```
-
-Nginx proxy:
-
-```
-http://localhost
-```
-
----
-
-## Local installation
-
-Install dependencies:
-
-```
+```bash
 pip install -r requirements.txt
 ```
 
-Run server:
+This is needed if you want to run the backend locally without Docker, or for IDE support.
+
+## Step 3 — Configure environment
+
+Create a `.env` file in the project root (see `.env.example` if available). Key variables:
+
+* `DATABASE_URL` — PostgreSQL connection string
+* `SECRET_KEY` — JWT secret key
+* `GOOGLE_CLOUD_PROJECT` — your GCP project ID
+* `GOOGLE_APPLICATION_CREDENTIALS` — path to `vertex-ai-key.json`
+
+## Step 4 — Start the backend (Docker)
+
+```bash
+docker compose up -d --build
+```
+
+This will start 4 containers:
+
+| Container | Port | Description |
+|-----------|------|-------------|
+| `nutri-ai-backend` | 3001 | FastAPI server |
+| `nutri-ai-postgres` | 5433 | PostgreSQL database |
+| `nutri-ai-redis` | 6379 | Redis cache |
+| `nutri-ai-nginx` | 80/443 | Nginx reverse proxy |
+
+Verify everything is running:
+
+```bash
+docker compose ps
+```
+
+Backend health check:
 
 ```
-python run_server.py
+http://localhost:3001/docs
 ```
+
+## Step 5 — Start the frontend (Expo)
+
+```bash
+cd nutriai_frontend
+npm install
+npx expo start
+```
+
+After Expo starts, you will see a menu in the terminal. Press:
+
+* **`i`** — to open on **iOS Simulator** (recommended, fully tested)
+* **`a`** — to open on Android Emulator (not fully tested)
+
+Make sure you have **Xcode** installed and an iOS Simulator configured. Expo will launch it automatically.
+
+## Quick start summary
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Start backend
+docker compose up -d --build
+
+# 3. Start frontend
+cd nutriai_frontend
+npm install
+npx expo start
+# Press 'i' for iOS Simulator
+```
+
+---
+
+## Testing notes
+
+* **Platform tested:** iOS (iPhone Simulator via Xcode)
+* **Expo** supports both iOS and Android, but all features were developed and verified exclusively on iOS
+* The backend must be running (`docker compose up`) before launching the frontend
+* Both backend and frontend must be on the same network (`localhost`)
 
 ---
 
@@ -392,7 +436,7 @@ NutriAI Team
 
 [email@example.com](mailto:email@example.com)
 
-https://github.com/your_username
+https://github.com/playboifufalo
 
 ---
 
