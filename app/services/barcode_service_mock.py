@@ -1,9 +1,7 @@
-try:
-    from pyzbar.pyzbar import decode
-    BARCODE_AVAILABLE = True
-except ImportError as e:
-    print(f"warning: pyzbar not available: {e}")
-    BARCODE_AVAILABLE = False
+"""
+Alternative barcode scanner without zbar dependency
+For testing purposes when zbar is not available
+"""
 
 from PIL import Image
 import requests
@@ -12,49 +10,55 @@ import logging
 logger = logging.getLogger(__name__)
 
 def analyze_barcode_image(image: Image.Image) -> dict:
-    if not BARCODE_AVAILABLE:
-        return {
-            "error": "Barcode scanning not available - zbar library not installed",
-            "message": "Please install zbar library for barcode scanning",
-            "install_instructions": "brew install zbar  # on macOS"
-        }
+    """
+    Alternative barcode analysis implementation (without zbar).
+    Returns mock data for testing purposes.
+    """
+    logger.info("Using mock barcode scanner (zbar not available)")
     
-    try:
-
-        barcodes = decode(image)
+    # Simulate image analysis
+    image_size = image.size
+    
+    # Simple heuristic — if the image is horizontal,
+    # assume it might be a barcode
+    if image_size[0] > image_size[1] * 1.5:
+        # Return a test barcode
+        mock_barcode = "1234567890123"
+        logger.info(f"Mock barcode found: {mock_barcode}")
         
-        if barcodes:
-
-            barcode_data = barcodes[0].data.decode("utf-8")
-            barcode_type = barcodes[0].type
-            
-            logger.info(f"found barcode: {barcode_data} (type: {barcode_type})")
-
-            product_info = get_product_info(barcode_data)
-            
-            return {
-                "barcode": barcode_data,
-                "barcode_type": barcode_type,
-                "product": product_info,
-                "source": "openfoodfacts"
+        # Get test product info
+        product_info = {
+            "name": "test product",
+            "brand": "test Brand", 
+            "found": True,
+            "mock": True,
+            "nutrition": {
+                "calories": 250,
+                "protein": 12.5,
+                "carbohydrates": 30.0,
+                "fat": 8.5
             }
-        else:
-            logger.info(f"barcode not found on image")
-            return {
-                "message": "No barcode found, try AI recognition."
-            }
-            
-    except Exception as e:
-        logger.error(f"error during barcode analysis: {str(e)}")
+        }
+        
         return {
-            "error": str(e),
-            "message": "Error processing barcode"
+            "barcode": mock_barcode,
+            "barcode_type": "EAN13",
+            "product": product_info,
+            "source": "mock_scanner",
+            "note": "This is a mock result - install zbar for real barcode scanning"
+        }
+    else:
+        return {
+            "message": "No barcode found (mock scanner)",
+            "note": "Install zbar library for real barcode scanning"
         }
 
 def get_product_info(barcode: str) -> dict:
-
+    """
+    Get product info by barcode from OpenFoodFacts.
+    Works without zbar.
+    """
     try:
-        #Request to OpenFoodFacts API
         url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
         response = requests.get(url, timeout=30)
         
@@ -63,7 +67,7 @@ def get_product_info(barcode: str) -> dict:
             
             if data.get("status") == 1:
                 product = data.get("product", {})
-
+                
                 product_info = {
                     "name": product.get("product_name", "Unknown product"),
                     "brand": product.get("brands", ""),
@@ -74,40 +78,30 @@ def get_product_info(barcode: str) -> dict:
                     "found": True
                 }
                 
-                logger.info(f"product information found: {product_info['name']}")
                 return product_info
             else:
-                logger.info(f"product with barcode {barcode} not found in openfoodfacts database")
                 return {
                     "found": False,
                     "message": "Product not found in database"
                 }
         else:
-            logger.error(f"openfoodfacts request error: {response.status_code}")
             return {
                 "found": False,
                 "error": f"API request failed: {response.status_code}"
             }
             
-    except requests.exceptions.Timeout:
-        logger.error(f"timeout during openfoodfacts request")
-        return {
-            "found": False,
-            "error": "Request timeout"
-        }
     except Exception as e:
-        logger.error(f"error getting product information: {str(e)}")
+        logger.error(f"Error getting product info: {str(e)}")
         return {
             "found": False,
             "error": str(e)
         }
 
 def extract_nutrition_info(product: dict) -> dict:
-
+    """Extract nutrition information from product data."""
     nutrition = {}
     nutriments = product.get("nutriments", {})
     
-    #Main nutrients per 100g
     nutrition_mapping = {
         "energy_100g": "calories",
         "proteins_100g": "protein", 

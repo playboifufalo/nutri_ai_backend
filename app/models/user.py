@@ -31,13 +31,16 @@ class User(Base):
     nutrition_goals = relationship("NutritionGoal", back_populates="user")
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
     lifestyle_preferences = relationship("UserLifestylePreference", back_populates="user")
+    scan_sessions = relationship("ProductScanSession", back_populates="user")
+    generated_recipes = relationship("GeneratedRecipe", back_populates="user")
+    meal_plans = relationship("MealPlan", back_populates="user")
     
-    def set_password(self, password: str):
 
+
+    def set_password(self, password: str):
         self.hashed_password = pwd_context.hash(password)
     
     def verify_password(self, password: str) -> bool:
-
         return pwd_context.verify(password, self.hashed_password)
     
     def __repr__(self):

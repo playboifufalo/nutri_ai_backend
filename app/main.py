@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 from .models.database import get_db, init_db
-from .routes import auth, food_analysis, scanner, preferences, lifestyle, meal_planning
+from .routes import auth, food_analysis, scanner, scanner_ai, preferences, lifestyle, meal_planning
 
 app = FastAPI(
     title=os.getenv("APP_NAME", "Nutri AI Backend"),
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(food_analysis.router)
 app.include_router(scanner.router)
+app.include_router(scanner_ai.router)
 app.include_router(preferences.router)
 app.include_router(lifestyle.router)
 app.include_router(meal_planning.router)

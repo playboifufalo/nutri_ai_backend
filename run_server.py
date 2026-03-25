@@ -3,7 +3,7 @@ import uvicorn  #startup code for server
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
+#load environment variables
 load_dotenv()
 
 if __name__ == "__main__":

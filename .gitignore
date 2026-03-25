@@ -1,73 +1,143 @@
-#Environment variables
-.env
-.env.local
-.env.production
+# Environment variables#Environment variables
+
+.env.env
+
+.env.local.env.local
+
+.env.production.env.production
+
+.env.test
 
 #Database
-*.db
-*.sqlite
+
+# Database*.db
+
+*.db*.sqlite
+
+*.sqlite*.sqlite3
+
 *.sqlite3
 
-#Python
+data/#Python
+
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
+
+# Python*.py[cod]
+
+__pycache__/*$py.class
+
+*.py[cod]*.so
+
+*$py.class.Python
+
+*.sobuild/
+
+.Pythondevelop-eggs/
+
+build/dist/
+
+dist/downloads/
+
+*.egg-info/eggs/
+
+*.egg.eggs/
+
+.venv/lib/
+
+.venv-*/lib64/
+
+venv/parts/
+
 sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
+
+# Nodevar/
+
+node_modules/wheels/
+
+npm-debug.log*share/python-wheels/
+
+yarn-debug.log**.egg-info/
+
+yarn-error.log*.installed.cfg
+
 *.egg
-MANIFEST
 
-#Virtual environments
-.env/
+# ExpoMANIFEST
+
+.expo/
+
+dist/#Virtual environments
+
+web-build/.env/
+
 .venv/
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
-#IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# IDEenv/
+
+.vscode/venv/
+
+.idea/ENV/
+
+*.swpenv.bak/
+
+*.swovenv.bak/
+
 *~
 
-#OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+#IDE
 
-#Logs
+# OS.vscode/
+
+.DS_Store.idea/
+
+Thumbs.db*.swp
+
+*.swo
+
+# Logs*~
+
 *.log
+
+logs/#OS
+
+.DS_Store
+
+# Uploads.DS_Store?
+
+uploads/._*
+
+temp/.Spotlight-V100
+
+tmp/.Trashes
+
+ehthumbs.db
+
+# Keys and secretsThumbs.db
+
+vertex-ai-key.json
+
+*.pem#Logs
+
+*.key*.log
+
 logs/
 
-#Upload directories
-uploads/
-temp/
+# Testing
+
+.pytest_cache/#Upload directories
+
+.coverageuploads/
+
+htmlcov/temp/
+
 tmp/
 
-#Testing
-.pytest_cache/
+# Misc
+
+server.log#Testing
+
+user_token.json.pytest_cache/
+
 .coverage
 htmlcov/
 .tox/

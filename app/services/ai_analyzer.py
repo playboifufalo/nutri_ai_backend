@@ -1,9 +1,11 @@
 
 
 import os
-from typing import Dict, Any, Optional, List
-from PIL import Image
+import json
 import logging
+from typing import Dict, Any, Optional, List, Tuple
+from PIL import Image
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,34 +13,8 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    if openai_api_key and openai_api_key != "your-openai-api-key-here":
-        openai_client = OpenAI(api_key=openai_api_key)
-    else:
-        openai_client = None
-        logger.warning(f"openai api key not configured, using fallback data")
-        
-except ImportError:
-    OPENAI_AVAILABLE = False
-    openai_client = None
-    logger.warning(f"openai package not installed, using fallback data only")
-
-import openai
-import json
-from typing import Dict, List, Optional, Tuple
-from PIL import Image
-import base64
-import io
-from pathlib import Path
-
 class AIFoodAnalyzer:
-    def __init__(self, api_key: Optional[str] = None):
-
-        self.client = openai.OpenAI(api_key=api_key) if api_key else None
+    def __init__(self):
 
         self.food_database = {
             "apple": {
@@ -83,59 +59,12 @@ class AIFoodAnalyzer:
             }
         }
     
-    def encode_image(self, image_path: str) -> str:
-
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
-    
     def analyze_food_image(self, image_path: str) -> Dict:
 
         try:
-            if self.client:
-                return self._analyze_with_openai(image_path)
-            else:
-                return self._analyze_with_fallback(image_path)
+            return self._analyze_with_fallback(image_path)
         except Exception as e:
             return self._analyze_with_fallback(image_path, error=str(e))
-    
-    def _analyze_with_openai(self, image_path: str) -> Dict:
-
-        base64_image = self.encode_image(image_path)
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4-vision-preview",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": """Analyze this food image and provide:
-                            1. Food name/type
-                            2. Estimated weight in grams
-                            3. Confidence score (0-1)
-                            4. Brief description
-                            
-                            Return as JSON with keys: food_name, estimated_weight_grams, confidence_score, description"""   #here's the basic prompt for openai response
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
-            ],
-            max_tokens=300
-        )
-        
-        try:
-            result = json.loads(response.choices[0].message.content)
-            result["ai_powered"] = True
-            return result
-        except json.JSONDecodeError:
-            return self._analyze_with_fallback(image_path)
     
     def _analyze_with_fallback(self, image_path: str, error: str = None) -> Dict:
 
@@ -191,7 +120,7 @@ class AIFoodAnalyzer:
     def generate_nutrition_advice(self, food_name: str, nutrition_data: Dict, user_goals: Optional[Dict] = None) -> str:
 
         try:
-            if self.client and user_goals:
+            if user_goals:
                 return self._generate_ai_advice(food_name, nutrition_data, user_goals)
             else:
                 return self._generate_fallback_advice(food_name, nutrition_data)
@@ -207,7 +136,7 @@ class AIFoodAnalyzer:
         
         Provide brief, helpful nutrition advice about this food in the context of the user's goals.     
         Keep it under 100 words and be encouraging.
-Generate basic advice without AI"""
+        Generate basic advice without AI"""
         category = nutrition_data.get("category", "unknown")
         calories = nutrition_data.get("calories", 0)
         protein = nutrition_data.get("protein", 0)

@@ -18,12 +18,13 @@ RUN apt-get update \
         libjpeg-dev \
         libpng-dev \
         libssl-dev \
+        libzbar0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 # Create directories for data, uploads, and logs
 RUN mkdir -p /app/data /app/uploads /app/logs

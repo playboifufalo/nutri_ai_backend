@@ -1,8 +1,9 @@
 
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict, Any
+from pydantic import BaseModel
 
 from ..models.database import get_db
 from ..models.user import User
@@ -190,12 +191,42 @@ def add_disliked_product(
         
     return {"message": f"Product '{product}' added to disliked"}
 
+class ScannedProductBody(BaseModel):
+    name: str
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    weight_grams: Optional[float] = None
+    calories_per_100g: Optional[float] = 0
+    protein_per_100g: Optional[float] = 0
+    carbs_per_100g: Optional[float] = 0
+    fat_per_100g: Optional[float] = 0
+
 @router.post("/me/add-scanned-product")
 def add_scanned_product(
-    product: str,
+    product: Optional[str] = Query(None, description="Product name (legacy, query param)"),
+    body: Optional[ScannedProductBody] = Body(None, description="Product with nutrition data"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Add a scanned product. Accepts either ?product=name (legacy) or JSON body with nutrition."""
+    # Build product object from whichever source is provided
+    if body and body.name:
+        product_obj = {
+            "name": body.name,
+            "brand": body.brand,
+            "category": body.category,
+            "weight_grams": body.weight_grams,
+            "calories_per_100g": body.calories_per_100g or 0,
+            "protein_per_100g": body.protein_per_100g or 0,
+            "carbs_per_100g": body.carbs_per_100g or 0,
+            "fat_per_100g": body.fat_per_100g or 0,
+        }
+        product_name = body.name
+    elif product:
+        product_obj = {"name": product}
+        product_name = product
+    else:
+        raise HTTPException(status_code=400, detail="Provide product name via query param or JSON body")
 
     preferences = db.query(UserPreferences).filter(
         UserPreferences.user_id == current_user.id
@@ -214,10 +245,34 @@ def add_scanned_product(
         db.commit()
         db.refresh(preferences)
     
-    preferences.add_scanned_product(product)
+    preferences.add_scanned_product(product_obj)
     db.commit()
     
-    return {"message": f"Product '{product}' added to scan history"}
+    return {"message": f"Product '{product_name}' added to scan history"}
+
+@router.delete("/me/remove-scanned-product")
+def remove_scanned_product(
+    product: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    preferences = db.query(UserPreferences).filter(
+        UserPreferences.user_id == current_user.id
+    ).first()
+
+    if not preferences:
+        raise HTTPException(status_code=404, detail="Preferences not found")
+
+    removed = preferences.remove_scanned_product(product)
+    if not removed:
+        raise HTTPException(status_code=404, detail=f"Product '{product}' not found in scan history")
+
+    db.commit()
+    remaining = preferences.get_last_scanned_products()
+    return {
+        "message": f"Product '{product}' removed from scan history",
+        "remaining_products": len(remaining)
+    }
 
 @router.delete("/me")
 def delete_my_preferences(

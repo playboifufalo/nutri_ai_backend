@@ -15,7 +15,7 @@ class VertexAIService:
 
     
     def __init__(self):
-        self.project_id = os.getenv("VERTEX_AI_PROJECT_ID", "neon-pad-478212-c6")
+        self.project_id = os.getenv("VERTEX_AI_PROJECT_ID", "neon-pad-478212-c6") #neon-pad-478212-c6 is an id of my project in google console
         self.location = os.getenv("VERTEX_AI_LOCATION", "us-central1")
         self.api_key = os.getenv("VERTEX_AI_API_KEY")
         self.model = os.getenv("VERTEX_AI_MODEL", "gemini-pro")
@@ -71,6 +71,64 @@ class VertexAIService:
             logger.error(f"error getting access token: {e}")
             return None
     
+    def generate_text_sync(self, prompt: str, max_tokens: int = 4096, temperature: float = 0.7) -> Dict[str, Any]:
+        import httpx as _httpx
+
+        auth_token = self.access_token or self.api_key
+        if not auth_token:
+            logger.error("No authentication credentials available for sync call")
+            return {"success": False, "error": "No credentials", "fallback": True}
+
+        url = (
+            f"https://{self.location}-aiplatform.googleapis.com/v1/"
+            f"projects/{self.project_id}/locations/{self.location}/"
+            f"publishers/google/models/{self.model}:generateContent"
+        )
+        headers = {
+            "Authorization": f"Bearer {auth_token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "maxOutputTokens": max_tokens,
+                "temperature": temperature,
+                "topP": 0.8,
+                "topK": 40,
+            },
+        }
+
+        try:
+            with _httpx.Client(timeout=90.0) as client:
+                response = client.post(url, headers=headers, json=payload)
+
+            if response.status_code == 200:
+                result = response.json()
+                candidates = result.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        text = parts[0].get("text", "")
+                        logger.info("Vertex AI sync response: %d chars", len(text))
+                        return {
+                            "success": True,
+                            "content": text,
+                            "model": self.model,
+                        }
+
+                return {"success": False, "error": "Empty AI response", "fallback": True}
+
+            logger.error("Vertex AI sync error %d: %s", response.status_code, response.text[:300])
+            return {"success": False, "error": f"HTTP {response.status_code}", "fallback": True}
+
+        except _httpx.TimeoutException:
+            logger.error("Vertex AI sync request timed out")
+            return {"success": False, "error": "Timeout", "fallback": True}
+        except Exception as exc:
+            logger.error("Vertex AI sync error: %s", exc)
+            return {"success": False, "error": str(exc), "fallback": True}
+
+
     async def generate_text(self, prompt: str, max_tokens: int = 1000) -> Dict[str, Any]:
 
         auth_token = None
@@ -79,7 +137,7 @@ class VertexAIService:
             logger.info("🔐 Using Service Account authentication")
         elif self.api_key:
             auth_token = self.api_key
-            logger.info("🔑 Using API Key authentication")
+            logger.info("Using API Key authentication")
         else:
             logger.error(" No authentication credentials available")
             return {
@@ -92,15 +150,15 @@ class VertexAIService:
 
             url = f"https://{self.location}-aiplatform.googleapis.com/v1/projects/{self.project_id}/locations/{self.location}/publishers/google/models/{self.model}:generateContent"
             
-            logger.info(f"🌐 Making request to Vertex AI:")
-            logger.info(f"   URL: {url}")
-            logger.info(f"   Project: {self.project_id}")
-            logger.info(f"   Location: {self.location}")
-            logger.info(f"   Model: {self.model}")
-            logger.info(f"   Prompt length: {len(prompt)} chars")
+            logger.info(f"Making request to Vertex AI:")
+            logger.info(f"URL: {url}")
+            logger.info(f"Project: {self.project_id}")
+            logger.info(f"Location: {self.location}")
+            logger.info(f" Model: {self.model}")
+            logger.info(f"Prompt length: {len(prompt)} chars")
             
             headers = {
-                "Authorization": f"Bearer {auth_token}",  # Use full token for request
+                "Authorization": f"Bearer {auth_token}", #getting token for request
                 "Content-Type": "application/json"
             }
 
@@ -123,35 +181,35 @@ class VertexAIService:
                 }
             }
             
-            logger.info(f"🤖 Sending request to Vertex AI: {self.model}")
+            logger.info(f"Sending request to Vertex AI: {self.model}")
             
             async with httpx.AsyncClient(timeout=60.0) as client:
-                logger.info("📡 Sending HTTP request to Vertex AI...")
-                response = await client.post(url, headers=headers, json=payload)
+                logger.info("Sending HTTP request to Vertex AI...")
+                response = await client.post(url, headers=headers, json=payload) #sending request to vertex ai and waiting for response
                 
-                logger.info(f"📥 HTTP Response received:")
-                logger.info(f"   Status Code: {response.status_code}")
-                logger.info(f"   Headers: {dict(response.headers)}")
-                logger.info(f"   Content Length: {len(response.content)} bytes")
+                logger.info(f"HTTP Response received:")
+                logger.info(f"Status Code: {response.status_code}")
+                logger.info(f"Headers: {dict(response.headers)}")
+                logger.info(f"Content Length: {len(response.content)} bytes")
                 
                 if response.status_code == 200:
                     result = response.json()
-                    logger.info(f" JSON parsed successfully")
-                    logger.info(f"   Response keys: {list(result.keys())}")
+                    logger.info(f"JSON parsed successfully")
+                    logger.info(f"Response keys: {list(result.keys())}")
 
                     candidates = result.get("candidates", [])
-                    logger.info(f"   Candidates found: {len(candidates)}")
+                    logger.info(f"Candidates found: {len(candidates)}")
                     
                     if candidates:
                         content = candidates[0].get("content", {})
                         parts = content.get("parts", [])
-                        logger.info(f"   Parts found: {len(parts)}")
+                        logger.info(f"Parts found: {len(parts)}")
                         
                         if parts:
                             generated_text = parts[0].get("text", "")
                             
-                            logger.info(f" Vertex AI response received: {len(generated_text)} characters")
-                            logger.info(f"   Generated text preview: {generated_text[:100]}...")
+                            logger.info(f"Vertex AI response received: {len(generated_text)} characters")
+                            logger.info(f"Generated text preview: {generated_text[:100]}...")
                             
                             return {
                                 "success": True,
@@ -169,8 +227,8 @@ class VertexAIService:
                     }
                 
                 elif response.status_code == 401:
-                    logger.error("🔒 Vertex AI authentication failed")
-                    logger.error(f"   Response: {response.text}")
+                    logger.error("Vertex AI authentication failed")
+                    logger.error(f"Response: {response.text}")
                     return {
                         "success": False,
                         "error": "Authentication failed - check API key",
@@ -178,8 +236,8 @@ class VertexAIService:
                     }
                 
                 elif response.status_code == 403:
-                    logger.error("🚫 Vertex AI access denied")
-                    logger.error(f"   Response: {response.text}")
+                    logger.error("Vertex AI access denied")
+                    logger.error(f"Response: {response.text}")
                     return {
                         "success": False,
                         "error": "Access denied - check project permissions", 
@@ -223,46 +281,56 @@ class VertexAIService:
         
         prompt = f"""Generate a detailed meal plan in JSON format with the following specifications:
 
-User Requirements:
-- Daily Calories: {user_data.get('daily_calories', 2000)} kcal
-- Diet Type: {user_data.get('diet_type', 'balanced')}
-- Goal: {user_data.get('goal', 'maintenance')}
-- Lifestyle: {user_data.get('lifestyle', 'moderate')}
-- Time Period: {user_data.get('time_period', 1)} day(s)
-- Allergies: {', '.join(user_data.get('allergies', [])) or 'None'}
-- Available Ingredients: {', '.join(user_data.get('available_ingredients', [])) or 'Any'}
+            User Requirements:
+            - Daily Calories: {user_data.get('daily_calories', 2000)} kcal
+            - Diet Type: {user_data.get('diet_type', 'balanced')}
+            - Goal: {user_data.get('goal', 'maintenance')}
+            - Lifestyle: {user_data.get('lifestyle', 'moderate')}
+            - Time Period: {user_data.get('time_period', 1)} day(s)
+            - Allergies: {', '.join(user_data.get('allergies', [])) or 'None'}
+            - Available Ingredients: {', '.join(user_data.get('available_ingredients', [])) or 'Any'}
 
-Please create a meal plan that includes:
-1. Breakfast, Lunch, Dinner, and 1-2 snacks
-2. Detailed ingredient lists with quantities
-3. Step-by-step cooking instructions
-4. Nutritional information (calories, protein, fat, carbs)
-5. Preparation time
-6. Consider the user's dietary preferences and available ingredients
+            Please create a meal plan that includes:
+            1. Breakfast, Lunch, Dinner, and 1-2 snacks
+            2. Detailed ingredient lists with quantities
+            3. DETAILED step-by-step cooking instructions (5-8 steps per meal). Each step must be a clear, actionable sentence describing exactly what to do (e.g. temperatures, timing, techniques).
+            4. Nutritional information (calories, protein, fat, carbs)
+            5. Preparation time and cooking time separately
+            6. Consider the user's dietary preferences and available ingredients
 
-Return ONLY a valid JSON object with this structure:
-{{
-    "days": [
-        {{
-            "day_number": 1,
-            "total_calories": 2000,
-            "meals": [
-                {{
-                    "meal_type": "breakfast",
-                    "meal_name": "Meal Name",
-                    "description": "Brief description",
-                    "ingredients": ["ingredient 1", "ingredient 2"],
-                    "instructions": ["step 1", "step 2"],
-                    "calories": 500,
-                    "macros": {{"protein": 20, "fat": 15, "carbs": 65}},
-                    "prep_time_minutes": 15
-                }}
-            ]
-        }}
-    ]
-}}
+            IMPORTANT: Each meal MUST have at least 5 detailed cooking instruction steps. Short 1-2 step instructions are NOT acceptable.
 
-Make sure the response is valid JSON that can be parsed."""
+            Return ONLY a valid JSON object with this structure:
+            {{
+                "days": [
+                    {{
+                        "day_number": 1,
+                        "total_calories": 2000,
+                        "meals": [
+                            {{
+                                "meal_type": "breakfast",
+                                "meal_name": "Meal Name",
+                                "description": "Brief description",
+                                "ingredients": ["200g ingredient 1", "2 tbsp ingredient 2"],
+                                "instructions": [
+                                    "Preheat the oven to 180°C (350°F) and line a baking sheet with parchment paper.",
+                                    "In a large bowl, combine the dry ingredients: flour, sugar, baking powder, and a pinch of salt.",
+                                    "In a separate bowl, whisk together the wet ingredients: eggs, milk, melted butter, and vanilla extract.",
+                                    "Pour the wet mixture into the dry ingredients and fold gently until just combined — do not overmix.",
+                                    "Divide the batter evenly among the prepared molds and bake for 20-25 minutes until golden on top.",
+                                    "Remove from oven and let cool for 5 minutes before serving with fresh fruit."
+                                ],
+                                "calories": 500,
+                                "macros": {{"protein": 20, "fat": 15, "carbs": 65}},
+                                "prep_time_minutes": 15,
+                                "cook_time_minutes": 25
+                            }}
+                        ]
+                    }}
+                ]
+            }}
+
+            Make sure the response is valid JSON that can be parsed."""
 
         return prompt
     
@@ -270,28 +338,21 @@ Make sure the response is valid JSON that can be parsed."""
 
         
         try:
-            logger.info(f"🍽️ Generating meal plan with Vertex AI for {user_data.get('username', 'user')}")
-
+            logger.info(f"Generating meal plan with Vertex AI for {user_data.get('username', 'user')}")
             prompt = self.create_meal_plan_prompt(user_data)
-
-            response = await self.generate_text(prompt, max_tokens=2000)
+            response = await self.generate_text(prompt, max_tokens=4096)
             
             if response.get("success"):
                 generated_text = response.get("text", "")
-
                 try:
-
                     clean_text = generated_text.strip()
                     if clean_text.startswith("```json"):
                         clean_text = clean_text[7:]
                     if clean_text.endswith("```"):
                         clean_text = clean_text[:-3]
                     clean_text = clean_text.strip()
-                    
                     meal_plan_data = json.loads(clean_text)
-                    
                     logger.info(f"ai plan successfully parsed")
-                    
                     return {
                         "success": True,
                         "ai_powered": True,
@@ -331,8 +392,7 @@ Make sure the response is valid JSON that can be parsed."""
     def generate_content_with_image(self, prompt: str, base64_image: str, model_name: str = None) -> Dict[str, Any]:
 
         try:
-
-            model = model_name or "gemini-2.0-flash-001"
+            model = model_name or self.model
             
             logger.info(f"sending vision request to vertex {model}")
 
@@ -355,7 +415,7 @@ Make sure the response is valid JSON that can be parsed."""
                     "temperature": 0.1,
                     "topP": 0.8,
                     "topK": 40,
-                    "maxOutputTokens": 2048,
+                    "maxOutputTokens": 8192,
                 },
                 "safetySettings": [
                     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
@@ -379,38 +439,55 @@ Make sure the response is valid JSON that can be parsed."""
 
             url = f"https://{self.location}-aiplatform.googleapis.com/v1/projects/{self.project_id}/locations/{self.location}/publishers/google/models/{model}:generateContent"
             
-            logger.info(f" Sending vision request to Vertex AI: {model}")
+            logger.info(f"Sending vision request to Vertex AI: {model}")
             
-            with httpx.Client(timeout=30.0) as client:
-                response = client.post(url, json=payload, headers=headers)
-                
-                if response.status_code == 200:
-                    result = response.json()
+            max_retries = 2
+            last_error = None
+            for attempt in range(max_retries + 1):
+                with httpx.Client(timeout=90.0) as client:
+                    response = client.post(url, json=payload, headers=headers)
+                    
+                    if response.status_code == 200:
+                        result = response.json()
 
-                    if "candidates" in result and len(result["candidates"]) > 0:
-                        candidate = result["candidates"][0]
-                        
-                        if "content" in candidate and "parts" in candidate["content"]:
-                            content_text = ""
-                            for part in candidate["content"]["parts"]:
-                                if "text" in part:
-                                    content_text += part["text"]
+                        if "candidates" in result and len(result["candidates"]) > 0:
+                            candidate = result["candidates"][0]
                             
-                            logger.info(f" Vertex AI vision analysis completed")
-                            return {
-                                "success": True,
-                                "content": content_text,
-                                "model_used": model,
-                                "usage": result.get("usageMetadata", {})
-                            }
+                            if "content" in candidate and "parts" in candidate["content"]:
+                                content_text = ""
+                                for part in candidate["content"]["parts"]:
+                                    if "text" in part:
+                                        content_text += part["text"]
+                                
+                                logger.info(f" Vertex AI vision analysis completed")
+                                return {
+                                    "success": True,
+                                    "content": content_text,
+                                    "model_used": model,
+                                    "usage": result.get("usageMetadata", {})
+                                }
+                        
+                        logger.warning(f"no valid content in response")
+                        return {"error": "No valid content in response", "raw_response": result}
                     
-                    logger.warning(f"no valid content in response")
-                    return {"error": "No valid content in response", "raw_response": result}
+                    elif response.status_code == 429:
+                        last_error = "AI service is temporarily overloaded"
+                        if attempt < max_retries:
+                            wait_time = 2 ** (attempt + 1)  # 2s, 4s
+                            logger.warning(f"⏳ Vertex AI 429 rate limit — retry {attempt+1}/{max_retries} in {wait_time}s")
+                            import time as _time
+                            _time.sleep(wait_time)
+                            continue
+                        else:
+                            logger.error(f"Vertex AI 429 — all {max_retries} retries exhausted")
+                            return {"error": last_error}
                     
-                else:
-                    logger.error(f"vertex ai vision request failed: {response.status_code}")
-                    logger.error(f"response: {response.text}")
-                    return {"error": f"Request failed with status {response.status_code}"}
+                    else:
+                        logger.error(f"vertex ai vision request failed: {response.status_code}")
+                        logger.error(f"response: {response.text}")
+                        return {"error": f"Request failed with status {response.status_code}"}
+            
+            return {"error": last_error or "Unknown error"}
                     
         except Exception as e:
             logger.error(f"error in vertex ai vision generation: {str(e)}")

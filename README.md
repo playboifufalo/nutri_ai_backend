@@ -1,214 +1,413 @@
 # Nutri AI Backend
 
-A comprehensive nutrition analysis backend service that provides food recognition, barcode scanning, and nutritional analysis using AI models including Google Vertex AI and OpenAI.
+AI-powered backend for a nutrition assistant mobile app that analyzes food products, generates meal plans, and provides personalized dietary recommendations.
 
-## Project Structure
+**Author:** Timofe Stukalin, a Computer Sciences' student in UCLan University.
+**Contact:** TStukalin@uclan.ac.uk
+**Repository:** https://github.com/your_username/nutri-ai-backend
 
-The project is organized into several main directories:
+---
 
-### Core Application (`app/`)
+# Table of Contents
 
-**Main Files:**
-- `main.py` - FastAPI application setup with all route configurations
-- `auth.py` - JWT authentication system for user management
+* About the Project
+* Key Features
+* Technology Stack
+* Getting Started
+* Configuration
+* Usage
+* Development
+* API Overview
+* Project Structure
+* Roadmap
+* Contributing
+* License
+* Contact
+* Acknowledgments
 
-**Models (`app/models/`):**
-Database models using SQLAlchemy:
-- `database.py` - Database configuration and session management
-- `user.py` - User account and authentication models  
-- `food.py` - Food items, nutrition data, and meal tracking models
-- `preferences.py` - User dietary preferences and restrictions
-- `lifestyle.py` - User lifestyle and health goal models
+---
 
-**Routes (`app/routes/`):**
-API endpoint definitions:
-- `auth.py` - User authentication endpoints (register, login, logout)
-- `food_analysis.py` - Food analysis and nutrition tracking endpoints
-- `preferences.py` - User preference management endpoints
-- `scanner.py` - Image scanning and barcode recognition endpoints
-- `lifestyle.py` - Lifestyle and health goal management endpoints
+# About the Project
 
-**Services (`app/services/`):**
-Business logic and external service integrations:
-- `ai_analyzer.py` - OpenAI integration for food analysis
-- `image_recognition.py` - Image processing and recognition services
-- `barcode_service.py` - Barcode scanning and product lookup
-- `vertex_ai_service.py` - Google Vertex AI integration
-- `vertex_ai_image_scanner.py` - Advanced image scanning with Vertex AI
+Nutri AI Backend is a FastAPI-based server that powers the NutriAI mobile application. The system analyzes food products using AI, generates personalized meal plans, and manages user dietary preferences and lifestyle data.
 
-### Configuration and Deployment
+The project solves the problem of manual nutrition tracking by providing automated product analysis, AI meal recommendations, and structured dietary planning.
 
-**Docker Configuration:**
-- `Dockerfile` - Main application container configuration
-- `docker-compose.yml` - Production deployment setup
-- `docker-compose.dev.yml` - Development environment setup
-- `docker-compose.prod.yml` - Production environment with optimizations
-- `Makefile` - Common Docker commands and shortcuts
+**Target users:**
 
-**Web Server:**
-- `nginx/nginx.conf` - Nginx reverse proxy configuration
-- `nginx-proxy/nginx.conf` - Additional proxy configurations
+* People tracking nutrition
+* Fitness enthusiasts
+* Users with dietary restrictions
+* Users seeking AI diet recommendations
 
-**Database:**
-- `database_init.sql` - Initial database schema
-- `init_database.sh` - Database initialization script
-- `sql/` - Additional SQL scripts and migrations
+---
 
-### Testing and Development
+# Key Features
 
-**Test Files:**
-- `test_api.py` - API endpoint testing
-- `test_components.py` - Component functionality testing
-- `test_scanner.py` - Image scanning functionality tests
-- Various product testing scripts (`test_products*.py`)
+## AI Food Analysis
 
-**Development Tools:**
-- `run_server.py` - Local development server launcher
-- `requirements.txt` - Python package dependencies
-- `check_db.py` - Database connectivity verification
+* Product scanning via barcode or image
+* Nutritional composition analysis
+* AI health recommendations
+* Product history tracking
 
-## API Endpoints
+## Meal Planning
 
-### Authentication Endpoints
+* AI generated meal plans
+* Personalized calorie targets
+* Allergy and preference filtering
+* Recipe generation
+* Fallback recipe library
 
-**POST /auth/register**
-Creates a new user account with email and password validation.
+## User Personalization
 
-**POST /auth/login** 
-Authenticates user credentials and returns JWT access token.
+* Dietary preferences
+* Allergies tracking
+* Favorite and disliked products
+* Lifestyle profiles
 
-**GET /auth/me**
-Returns current user profile information (requires authentication).
+## Integrations
 
-**POST /auth/logout**
-Invalidates current user session and JWT token.
+* Google Vertex AI (Gemini)
+* OpenFoodFacts database
+* TheMealDB recipes API
 
-### Food Analysis Endpoints
+---
 
-**POST /food/scan**
-Analyzes uploaded food images using AI to identify products and nutritional content.
+# Technology Stack
 
-**GET /food/scan-history**
-Retrieves user's previous food scanning history with timestamps.
+## Language / Runtime
 
-**GET /food/ai-advice**
-Provides personalized nutrition advice based on user's dietary history.
+* Python 3.11
 
-**POST /food/nutrition-goals**
-Allows users to set and update their nutritional targets and goals.
+## Frameworks
 
-### Scanner Endpoints
+* FastAPI
+* SQLAlchemy
+* Uvicorn
 
-**POST /scanner/detailed-analysis**
-Performs comprehensive food analysis on uploaded images, identifying multiple products with weight estimates and nutritional breakdowns.
+## AI Services
 
-**POST /scanner/barcode**
-Scans barcode images to identify specific products and retrieve detailed nutritional information.
+* Google Vertex AI (Gemini 2.5 Pro)
 
-**GET /scanner/history**
-Returns history of all scanning activities for the authenticated user.
+## Database / Storage
 
-### Preferences Endpoints
+* PostgreSQL (production)
+* SQLite (development)
+* Redis (caching)
 
-**GET /preferences**
-Retrieves user's dietary preferences, restrictions, and allergen information.
+## Infrastructure
 
-**POST /preferences**
-Updates user's dietary preferences and food restrictions.
+* Docker
+* Docker Compose
+* Nginx
 
-**DELETE /preferences**
-Removes specific dietary preferences or restrictions.
+## External Libraries
 
-### Lifestyle Endpoints
+* httpx
+* JWT authentication
+* OpenFoodFacts API integration
 
-**GET /lifestyle**
-Returns user's lifestyle information including activity level and health goals.
+---
 
-**POST /lifestyle**
-Updates user's lifestyle settings and health objectives.
+# Getting Started
 
-**GET /lifestyle/recommendations**
-Provides personalized recommendations based on lifestyle and goals.
+## Prerequisites
 
-## Quick Start
+Make sure you have installed:
 
-### Local Development
+```
+python --version
+docker --version
+docker-compose --version
+```
 
-Install Python dependencies:
-```bash
+Required:
+
+* Python 3.11+
+* Docker
+* Google Cloud account (Vertex AI)
+
+---
+
+# Installation
+
+## Using Docker (recommended)
+
+Clone repository:
+
+```
+git clone https://github.com/your_username/nutri-ai-backend.git
+
+cd nutri-ai-backend
+```
+
+Run containers:
+
+```
+docker-compose up -d --build
+```
+
+Server will start on:
+
+```
+http://localhost:3001
+```
+
+Nginx proxy:
+
+```
+http://localhost
+```
+
+---
+
+## Local installation
+
+Install dependencies:
+
+```
 pip install -r requirements.txt
 ```
 
-Start the development server:
-```bash
+Run server:
+
+```
 python run_server.py
 ```
 
-The API will be available at `http://localhost:5000` with interactive documentation at `http://localhost:5000/docs`.
+---
 
-### Docker Development
+# Configuration
 
-Start all services including database:
-```bash
-docker-compose -f docker-compose.dev.yml up
+Environment variables:
+
+```
+All of the variables are stored inside the .env file and can be seen only in a project's zip-archive. This was made due to the safety of all the data and the possibility that the project will keep developing and might become a commercial product in the future.
 ```
 
-### Production Deployment
+Can be set in:
 
-Deploy with optimized settings:
-```bash
-docker-compose -f docker-compose.prod.yml up -d
+* `.env`
+* docker-compose.yml
+
+---
+
+# Usage
+
+Swagger documentation:
+
+```
+/docs
 ```
 
-## Configuration
+Example:
 
-Create a `.env` file with required environment variables:
 ```
-SECRET_KEY=your-jwt-secret-key
-OPENAI_API_KEY=your-openai-api-key
-GOOGLE_APPLICATION_CREDENTIALS=path/to/vertex-ai-credentials.json
-DATABASE_URL=sqlite:///./nutri_ai.db
-API_HOST=0.0.0.0
-API_PORT=5000
+http://localhost:3001/docs
 ```
 
-## Features
+Main capabilities:
 
-The application supports:
-- Multi-product food recognition from images
-- Barcode scanning for packaged products
-- Nutritional analysis and calorie counting
-- User preference and dietary restriction management
-- Meal planning and nutrition goal tracking
-- AI-powered dietary recommendations
-- Complete user authentication system
-- Historical data tracking and analysis
+* Register user
+* Scan products
+* Generate meal plans
+* Manage preferences
+* Get AI recommendations
 
-## Technology Stack
+You also need to be connected to the internet for the whole time of using the application in order to use all the funcitons.
 
-- **Framework:** FastAPI (Python)
-- **Database:** SQLAlchemy with SQLite/PostgreSQL
-- **AI Services:** OpenAI GPT, Google Vertex AI (Gemini models)
-- **Authentication:** JWT tokens
-- **Containerization:** Docker with multi-stage builds
-- **Web Server:** Nginx reverse proxy
-- **Image Processing:** PIL, OpenCV
+---
 
-## Testing
+# Development
 
-Check database status:
-```bash
-python check_db.py
+Run development server:
+
+```
+python run_server.py
 ```
 
-Test API functionality:
-```bash
-python test_api.py
-python test_scanner.py
-python test_preferences.py
+Recommended dev tools:
+
+* Pytest
+* Postman
+
+---
+
+# Running Tests
+
+Example:
+
+```
+pytest
 ```
 
-Run component tests:
-```bash
-python test_components.py
+(Tests can be added in future versions)
+
+---
+
+# API Overview
+
+## Auth endpoints
+
+* POST `/auth/register`
+* POST `/auth/login`
+* POST `/auth/refresh`
+* GET `/auth/me`
+
+## Food analysis
+
+* POST `/food/scan`
+* GET `/food/scan-history`
+* GET `/food/ai-advice`
+
+## Scanner
+
+* POST `/scanner/barcode-lookup`
+* POST `/scanner/analyze`
+* POST `/scanner/scan-async`
+
+## Meal planning
+
+* POST `/meal-planning/generate`
+* GET `/meal-planning/quick-plan`
+
+## Preferences
+
+* GET `/preferences/me`
+* PUT `/preferences/me`
+
+## Lifestyle
+
+* GET `/lifestyle/types`
+* GET `/lifestyle/me/profile`
+
+---
+
+# Project Structure
+
 ```
+app/
+
+  main.py
+  FastAPI entry point
+
+  auth.py
+  JWT authentication
+
+  models/
+    user.py
+    food.py
+    meal_plan.py
+    preferences.py
+    lifestyle.py
+    scanned_products.py
+    database.py
+
+  routes/
+    auth.py
+    food_analysis.py
+    scanner.py
+    scanner_ai.py
+    preferences.py
+    lifestyle.py
+    meal_planning.py
+
+  services/
+    vertex_ai_service.py
+    recipe_generator.py
+    meal_planner_ai.py
+    ai_analyzer.py
+    openfoodfacts_service.py
+    barcode_service.py
+    vertex_ai_image_scanner.py
+    advanced_product_scanner.py
+```
+
+---
+# Roadmap
+For the future, I am planning to add more features such as sports exercises tracker and smart watch version of Nutri. Moreover, I will add some minor features such as the photo of the dishes in the meal plan; notifications and user's agreement.
+The most important thing I am going to do is to add subscription and to deploy my application to AppStore and GooglePlay.
+
+## Planned features
+
+* Nutrition scoring system
+* AI diet coach chat
+* Meal plan editing UI support
+* Better product recognition
+* Multilingual AI responses
+
+## Known limitations
+
+* AI response latency (~90s timeout for food scanning and meal plan building)
+* Limited fallback recipes
+* Depends on external APIs
+
+## Future improvements
+
+* Async AI processing
+* Better caching
+* Recommendation engine
+* ML personalization models
+
+---
+
+# Contributing
+
+Contributions are welcome.
+
+Suggested workflow:
+
+1 Fork repository
+
+2 Create branch:
+
+```
+git checkout -b feature-name
+```
+
+3 Commit changes:
+
+```
+git commit -m "feature description"
+```
+
+4 Push:
+
+```
+git push origin feature-name
+```
+
+# License
+
+MIT License
+
+See LICENSE file for details.
+
+---
+
+# Contact
+
+NutriAI Team
+
+[email@example.com](mailto:email@example.com)
+
+https://github.com/your_username
+
+---
+
+# Acknowledgments
+
+Technologies and services used:
+
+* Google Vertex AI
+* OpenFoodFacts
+* TheMealDB
+* FastAPI
+* SQLAlchemy
+* Redis
+* Docker
+
+* AIs such as ChatGPT, Grok and others were used for a research of functionality moments. For example, ChatGPT was used for understanding how AI integration works in code as there are not so many of guides of doing it properly. Moreover, Claude faster and quicker evaluation, testing & debugging (such as creating proper logs to find errors easier, creating tests and adding mock data).
+Grok helped me with the structure and choosing the right stack for the project and its development. 
+---

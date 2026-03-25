@@ -56,6 +56,12 @@ uploads/
 #node modules
 node_modules/
 
+#frontend (not needed in backend container)
+nutriai_frontend/
+
+#virtual environments (additional patterns)
+.venv-*/
+
 #temporary files
 temp/
 tmp/

@@ -66,33 +66,27 @@ async def scan_food(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-
     if not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an image"
         )
-
     file_extension = file.filename.split(".")[-1] if file.filename else "jpg"
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
     file_path = UPLOAD_DIR / unique_filename
-    
+
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-
         analysis_result = ai_analyzer.analyze_food_image(str(file_path))
-
         nutrition_data = ai_analyzer.get_nutrition_data(
             analysis_result["food_name"],
             analysis_result["estimated_weight_grams"]
         )
-
         user_goals = db.query(NutritionGoal).filter(
             NutritionGoal.user_id == current_user.id,
             NutritionGoal.is_active == True
         ).first()
-        
         goals_dict = None
         if user_goals:
             goals_dict = {
@@ -100,18 +94,17 @@ async def scan_food(
                 "daily_protein": user_goals.daily_protein_goal,
                 "diet_type": user_goals.diet_type
             }
-
         nutrition_advice = ai_analyzer.generate_nutrition_advice(
             analysis_result["food_name"],
             nutrition_data,
             goals_dict
         )
-
         health_score = ai_analyzer.calculate_health_score(nutrition_data)
-
         food_item = db.query(FoodItem).filter(
             FoodItem.name.ilike(f"%{analysis_result['food_name']}%")
         ).first()
+
+
 
         scan_result = ScanResult(
             user_id=current_user.id,
@@ -129,21 +122,20 @@ async def scan_food(
             fat=nutrition_data["fat"],
             fiber=nutrition_data["fiber"]
         )
-        
         db.add(scan_result)
         db.commit()
         db.refresh(scan_result)
-        
         return scan_result
         
     except Exception as e:
-
         if file_path.exists():
             file_path.unlink()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing image: {str(e)}"
         )
+
+
 
 @router.get("/scan-history", response_model=List[ScanResponse])
 def get_scan_history(
@@ -152,12 +144,14 @@ def get_scan_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-
     scans = db.query(ScanResult).filter(
         ScanResult.user_id == current_user.id
     ).order_by(ScanResult.scan_timestamp.desc()).offset(skip).limit(limit).all()
     
     return scans
+
+
+
 
 @router.get("/scan/{scan_id}", response_model=ScanResponse)
 def get_scan_result(
@@ -165,7 +159,6 @@ def get_scan_result(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-
     scan = db.query(ScanResult).filter(
         ScanResult.id == scan_id,
         ScanResult.user_id == current_user.id
@@ -174,7 +167,7 @@ def get_scan_result(
     if not scan:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Scan result not found"
+            detail="scan result not found"
         )
     
     return scan
@@ -194,7 +187,7 @@ def toggle_favorite(
     if not scan:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Scan result not found"
+            detail="scan result not found"
         )
     
     scan.is_favorite = not scan.is_favorite
@@ -233,28 +226,27 @@ def set_nutrition_goals(
         user_id=current_user.id,
         **goals.dict()
     )
-    
     db.add(new_goals)
     db.commit()
     db.refresh(new_goals)
-    
     return {"message": "Nutrition goals updated successfully"}
+
+
 
 @router.get("/nutrition-goals")
 def get_nutrition_goals(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-
     goals = db.query(NutritionGoal).filter(
         NutritionGoal.user_id == current_user.id,
         NutritionGoal.is_active == True
     ).first()
-    
     if not goals:
         return {"message": "no nutrition goals yet were set"}
-    
     return goals
+
+
 
 @router.get("/ai-advice")
 def get_ai_nutrition_advice(
@@ -263,14 +255,11 @@ def get_ai_nutrition_advice(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-
     nutrition_data = ai_analyzer.get_nutrition_data(food_name, weight_grams)
-
     user_goals = db.query(NutritionGoal).filter(
         NutritionGoal.user_id == current_user.id,
         NutritionGoal.is_active == True
     ).first()
-    
     goals_dict = None
     if user_goals:
         goals_dict = {
@@ -278,10 +267,8 @@ def get_ai_nutrition_advice(
             "daily_protein": user_goals.daily_protein_goal,
             "diet_type": user_goals.diet_type
         }
-
     advice = ai_analyzer.generate_nutrition_advice(food_name, nutrition_data, goals_dict)
     health_score = ai_analyzer.calculate_health_score(nutrition_data)
-    
     return {
         "food_name": food_name,
         "weight_grams": weight_grams,

@@ -20,7 +20,6 @@ router = APIRouter(
 )
 
 class MealPlanRequest(BaseModel):
-
     available_ingredients: List[str] = Field(default_factory=list, description="Available ingredients")
     allergies: List[str] = Field(default_factory=list, description="Allergies")
     diet_type: str = Field(default="balanced", description="Diet type: vegan, keto, high-protein, vegetarian, mediterranean, balanced")
@@ -31,7 +30,6 @@ class MealPlanRequest(BaseModel):
     preferences: Optional[Dict[str, Any]] = Field(default=None, description="Additional preferences")
 
 class MealPlanResponse(BaseModel):
-
     success: bool
     message: str
     ai_powered: bool
@@ -45,57 +43,40 @@ async def generate_meal_plan(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-
     try:
         logger.info(f"generating meal plan for user {current_user.username}")
-
         logger.info(f"request type: {type(request)}")
         logger.info(f"request has dict method: {hasattr(request, 'dict')}")
-
         user_preferences = db.query(UserPreferences).filter(
             UserPreferences.user_id == current_user.id
         ).first()
-
         logger.info(f"user preferences type: {type(user_preferences)}")
-
         user_data = request.model_dump()
-
         if user_preferences:
             try:
                 logger.info(f"getting allergies...")
                 stored_allergies = user_preferences.get_allergies()
                 logger.info(f"got allergies: {stored_allergies}")
-                
                 stored_liked = user_preferences.get_liked_products()
                 stored_disliked = user_preferences.get_disliked_products()
-
                 all_allergies = list(set(user_data["allergies"] + stored_allergies))
                 user_data["allergies"] = all_allergies
-
                 user_data["liked_products"] = stored_liked
                 user_data["disliked_products"] = stored_disliked
-                
                 logger.info(f"added user preferences: {len(all_allergies)} allergies, {len(stored_liked)} liked products")
-                
             except Exception as e:
                 logger.warning(f"could not parse user preferences: {e}")
-
         user_data["username"] = current_user.username
         user_data["user_id"] = current_user.id
-
         logger.info(" Starting meal plan generation...")
         meal_plan_result = await meal_planner.generate_meal_plan(user_data)
-
         logger.info(f"meal plan result type: {type(meal_plan_result)}")
         if hasattr(meal_plan_result, '__await__'):
-            logger.error("🚨 Result is a coroutine - awaiting again")
+            logger.error("Result is a coroutine - awaiting again")
             meal_plan_result = await meal_plan_result
-        
         logger.info(f"final result type: {type(meal_plan_result)}")
-        
         if isinstance(meal_plan_result, dict) and meal_plan_result.get("success"):
             logger.info(f" Meal plan generated successfully for {current_user.username}")
-            
             return {
                 "success": True,
                 "message": f"Meal plan for {request.time_period} days generated successfully",
@@ -117,8 +98,7 @@ async def generate_meal_plan(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to generate meal plan"
-            )
-            
+            )  
     except HTTPException:
         raise
     except Exception as e:
@@ -127,6 +107,8 @@ async def generate_meal_plan(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating meal plan: {str(e)}"
         )
+
+
 
 @router.get("/diet-types")
 async def get_diet_types():
@@ -235,6 +217,8 @@ async def get_lifestyle_types():
         ]
     }
 
+
+
 @router.get("/quick-plan")
 async def get_quick_meal_plan(
     calories: int = 2000,
@@ -242,7 +226,6 @@ async def get_quick_meal_plan(
     days: int = 3,
     current_user: User = Depends(get_current_user)
 ):
-
     try:
         logger.info(f"quick meal plan: {days} days, {calories} kcal, {diet_type}")
 
@@ -253,13 +236,10 @@ async def get_quick_meal_plan(
             goal="maintenance",
             lifestyle="moderate"
         )
-
         user_data = quick_request.model_dump()
         user_data["username"] = current_user.username
         user_data["user_id"] = current_user.id
-        
         meal_plan_result = await meal_planner.generate_meal_plan(user_data)
-        
         if meal_plan_result.get("success"):
             return {
                 "success": True,
@@ -281,17 +261,17 @@ async def get_quick_meal_plan(
             detail=f"Error generating quick meal plan: {str(e)}"
         )
 
+
+
 @router.get("/themealdb-test")
 async def test_themealdb():
 
     try:
         from ..services.meal_planner_ai import TheMealDBService
-
         random_meal = TheMealDBService.get_random_meal()
         categories = TheMealDBService.get_categories()
         chicken_meals = TheMealDBService.search_by_category("Chicken")[:3]
         pasta_search = TheMealDBService.search_meals_by_name("pasta")[:3]
-        
         return {
             "success": True,
             "message": "TheMealDB integration test",
@@ -308,7 +288,6 @@ async def test_themealdb():
                 "pasta_meals": [meal.get("strMeal") for meal in pasta_search]
             }
         }
-        
     except Exception as e:
         logger.error(f"themealdb test error: {str(e)}")
         return {

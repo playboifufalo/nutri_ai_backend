@@ -8,8 +8,6 @@ services:
       - "3001:3001"
     environment:
       - DATABASE_URL=sqlite:///./data/nutri_ai.db
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - VERTEX_AI_PROJECT_ID=${VERTEX_AI_PROJECT_ID}
       - VERTEX_AI_LOCATION=${VERTEX_AI_LOCATION}
       - VERTEX_AI_API_KEY=${VERTEX_AI_API_KEY}
@@ -20,9 +18,11 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=3001
     volumes:
+      - .:/app 
       - ./data:/app/data
       - ./uploads:/app/uploads
       - ./logs:/app/logs
+      - ./app/vertex-ai-key.json:/app/vertex-ai-key.json:ro
     depends_on:
       - postgres
     restart: unless-stopped
